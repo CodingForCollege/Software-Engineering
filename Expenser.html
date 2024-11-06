@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenser</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background-color: #002B36;}
+        h1 { color: #2AA198; text-align: center }
+        h2 { color: white; }
+        .section { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: white; }
+        input[type="username"], input[type="password"] { width: 50%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+
+    <h1>Expenser</h1>
+
+    <!-- Section to login to application -->
+    <div class="section">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <label for="username">Username:</label>
+            <input type="username" id="username" name="username" placeholder="Enter username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password"  placeholder="Enter password" required>
+
+            <button type="button" onclick="login()">Login</button>
+        </form>
+    </div>
+
+
+    <script src="app.js"></script> <!-- Link to JavaScript file -->
+</body>
+</html>
