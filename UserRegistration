@@ -1,0 +1,67 @@
+import bcrypt
+# Dictionary to store user information
+# key - email, value - password
+userDB = {}
+
+# Makes sure input follows basic email format
+def validEmail(email):
+    return "@" in email and "." in email
+
+# Return true if password is 8 char long
+def validPassword(password):
+    return len(password) >= 8
+
+# Function to register user
+def registerUser(userDB):
+
+    email = input("Enter your email: ")
+    password = input("Enter your password: ")
+
+    if not validEmail(email):
+        print("Invalid email format")
+        return False
+
+    if not validPassword(password):
+        print("Password must be 8 characters long.")
+        return False
+
+    if email in userDB:
+        print("User already exist")
+        return False
+
+    # Hashes password and generates a salt for added security
+    hashPassword = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
+    # Password is hased then stored in userDB
+    userDB[email] = {"password": hashPassword}
+    print("User registered successfully.")
+    return True
+
+# Function to authenticate existing user
+def userAuthentication(userDB):
+
+    email = input("Enter your email: ")
+    password = input("Enter your password: ")
+
+# Checks if user exist
+    if email not in userDB:
+        print("User not found.")
+        return False
+
+    # Retrieves the password value 
+    userPassword = userDB[email]["password"]
+
+    # Compares plain text password to hashed password
+    if bcrypt.checkpw(password.encode(), userPassword):
+        print("Authentication successful.")
+        return True 
+    else:
+        print("Invalid password.")
+        return False
+
+# Main program
+print("Register a new user:")
+registerUser(userDB)
+
+print("\nLog in to your account:")
+userAuthentication(userDB)
