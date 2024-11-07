@@ -1,3 +1,4 @@
+# bcrypt is a library used for secure password hashing
 import bcrypt
 # Dictionary to store user information
 # key - email, value - password
@@ -29,10 +30,10 @@ def registerUser(userDB):
         print("User already exist")
         return False
 
-    # Hashes password and generates a salt for added security
+    # Hashes password and stores it
     hashPassword = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
-    # Password is hased then stored in userDB
+    # Stores email and hashed password
     userDB[email] = {"password": hashPassword}
     print("User registered successfully.")
     return True
@@ -48,7 +49,7 @@ def userAuthentication(userDB):
         print("User not found.")
         return False
 
-    # Retrieves the password value 
+    # Retrieves the stored hashed password 
     userPassword = userDB[email]["password"]
 
     # Compares plain text password to hashed password
