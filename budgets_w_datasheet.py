@@ -78,6 +78,50 @@ class user_profile:
             writer.writerows(rows)
 
         
+    def get_weekly_notif_limit(self):
+        with open(file_name, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+
+        
+        return float(rows[1][1])
+    
+    def set_weekly_AAS(self, weekly_AAS):
+        weekly_AAS = user_profile().negative_check(weekly_AAS)
+        weekly_notif_limit = user_profile().get_weekly_notif_limit()
+        weekly_budget = user_profile().get_weekly_budget()
+        
+        og_weekly_AAS = user_profile().get_weekly_AAS()
+        
+        weekly_AAS = og_weekly_AAS + weekly_AAS
+        
+        if weekly_AAS > weekly_budget:
+            #send notification
+            print("Over budget!")
+        else:
+            if weekly_AAS >= weekly_notif_limit:
+                #send out notification
+                print(f"Notification amount met! ${weekly_AAS} has been spent out of {weekly_budget}")
+                
+        with open(file_name, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+
+        # Update the specific cell
+        rows[1][2] = weekly_AAS
+
+        with open(file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(rows)
+
+    
+    def get_weekly_AAS(self):
+        with open(file_name, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+            
+        return float(rows[1][2])
+    
     
     def get_sum_of_pm_budgets(self):
         with open(file_name, 'r') as file:
@@ -88,7 +132,7 @@ class user_profile:
     
     
     #add a payment method profile to user account
-    def add_pm(self, pay_method, pm_ID, pm_budget):
+    def add_pm(self, pay_method, pm_ID, pm_budget, notif_limit):
         pay_method = pay_method.capitalize()
         
         #checks if potential budget value is acceptable
@@ -111,18 +155,21 @@ class user_profile:
             pm_budget = float(input())
             sum_with_new_budget = og_sum_of_budgets + pm_budget
         
+        notif_limit = user_profile().negative_check(notif_limit)
+        notif_limit = user_profile().over_budget_check(pm_budget, notif_limit)
+        
         with open(file_name, 'r') as file:
             reader = csv.reader(file)
             rows = list(reader)
-            
-        rows[1][3] = sum_with_new_budget
         
         i = user_profile().get_row_index(pm_ID)    
         
         if i < len(rows):
-            rows[i] = [pm_ID, pay_method, pm_budget,0]
+            rows[i] = [pm_ID, pay_method, pm_budget,notif_limit,0,0]
         else:
-            rows.append([pm_ID, pay_method, pm_budget,0])
+            rows.append([pm_ID, pay_method, pm_budget,notif_limit,0,0])
+        
+        rows[1][3] = sum_with_new_budget
         
         with open(file_name, 'w', newline='') as file:
             writer = csv.writer(file)
@@ -185,7 +232,9 @@ class user_profile:
             writer = csv.writer(file)
             writer.writerows(rows)
     
-        
+    
+    
+    
     #return the budget value for a payment method profile
     def get_pm_budget(self, pm_ID):
         with open(file_name, 'r') as file:
@@ -196,6 +245,33 @@ class user_profile:
         
         return float(rows[i][2])
     
+    
+    def change_pm_notif_limit(self, pm_ID, notif_limit):
+        notif_limit = user_profile().negative_check(notif_limit)
+        pm_budget = user_profile().get_pm_budget(pm_ID)
+        notif_limit = user_profile().over_budget_check(pm_budget, notif_limit)
+        
+        with open(file_name, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+        
+        i = user_profile().get_row_index(pm_ID)
+        
+        rows[i][3] = notif_limit
+        
+        with open(file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(rows)
+
+    
+    def get_pm_notif_limit(self, pm_ID):
+        with open(file_name, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+        
+        i = user_profile().get_row_index(pm_ID)
+        
+        return float(rows[i][3])
     
     #add value of "amount spent" to the amount already spent value of a payment method
     def change_pm_aas(self, pm_ID, amount_spent):
@@ -209,7 +285,7 @@ class user_profile:
         Aas = user_profile().get_pm_aas(pm_ID)
         
         
-        rows[i][3] = amount_spent +Aas
+        rows[i][4] = amount_spent +Aas
         
         with open(file_name, 'w', newline='') as file:
             writer = csv.writer(file)
@@ -225,8 +301,18 @@ class user_profile:
         
         i = user_profile().get_row_index(pm_ID)
         
-        return float(rows[i][3])
+        return float(rows[i][4])
     
+    
+    def get_sum_of_cat_budgets(self, pm_ID):
+        
+        with open(file_name, 'r') as file:
+            reader = csv.reader(file)
+            rows = list(reader)
+            
+        i = user_profile().get_row_index(pm_ID)
+    
+        return float(rows[i][5])
     
     #adds a category profile for a payment method profile
     def add_category(self, pm_ID, cat, cat_budget, notif_limit):
@@ -237,6 +323,20 @@ class user_profile:
         
         pm_budget = user_profile().get_pm_budget(pm_ID)
         cat_budget = user_profile().over_budget_check(pm_budget, cat_budget)
+        
+        og_sum_of_budgets = user_profile().get_sum_of_cat_budgets(pm_ID)
+        sum_with_new_budget = og_sum_of_budgets + cat_budget
+        pm_budget = user_profile().get_pm_budget(pm_ID)
+        difference = pm_budget - og_sum_of_budgets
+        
+        cat_index = user_profile().get_cat_column_index(pm_ID,cat)
+        
+        #checks if potential budget fits in weekly budget
+        while sum_with_new_budget > pm_budget:
+            #send error message
+            print(f"Payment Method budget cannot be greater than {difference} to comply with overall weekly budget of ${pm_budget}. Please enter a budget value: ")
+            cat_budget = float(input())
+            sum_with_new_budget = og_sum_of_budgets + cat_budget
         
         #checks if notif_limit value is acceptable
         #not negative and within bounds
@@ -254,6 +354,8 @@ class user_profile:
         rows[i].append(notif_limit)
         rows[i].append(0)
         
+        rows[i][cat_index-1] = sum_with_new_budget
+        
         with open(file_name, 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerows(rows)
@@ -267,7 +369,7 @@ class user_profile:
             rows = list(reader)
         
         i = user_profile().get_row_index(pm_ID)
-        c_i = 4
+        c_i = 6
         row_tot_index = len(rows[i])
         
         while c_i < row_tot_index:
@@ -437,8 +539,16 @@ class user_profile:
         user_profile().change_pm_aas(pm_ID, amount_spent)
         #gets new amount already spent value
         pm_aas = user_profile().get_pm_aas(pm_ID)
+        #gets notification limit for pm
+        pm_notif_limit = user_profile().get_pm_notif_limit(pm_ID)
         #gets pm budget
         pm_budget = user_profile().get_pm_budget(pm_ID)
+        #gets pm name
+        pm_name = user_profile().get_pm_name(pm_ID)
+        
+        if pm_aas >= pm_notif_limit:
+            #send notification code here
+            print(f"Warning, limit has been reached for {pm_name}! Current amount spent is: {pm_aas}")
         
         if pm_aas >= pm_budget:
             #send notification here
@@ -449,6 +559,9 @@ class user_profile:
     def transaction_both(self, pm_ID, cat, amount_spent):
         user_profile().transaction_on_cat(pm_ID, cat, amount_spent)
         user_profile().transaction_on_pm(pm_ID, amount_spent)
+        user_profile().set_weekly_AAS(amount_spent)
+        
+        
         
     
     
@@ -466,35 +579,35 @@ class user_profile:
             
 
 new_user = user_profile()
-new_user.set_weekly_budget(10000)
-new_user.set_weekly_notif_limit(9999)
-new_user.add_pm('credit','4565', 2000)
-new_user.add_pm('debit', '8934', 5000)
+#new_user.set_weekly_budget(10000)
+#new_user.set_weekly_notif_limit(9999)
+new_user.add_pm('credit','4565', 50,20)
+new_user.add_pm('debit', '8934', 200,100)
 new_user.rename_pm('4565', 'Savings')
 
-new_user.change_pm_budget('4565', 3000)
+#new_user.change_pm_budget('4565', 75)
 
 print(new_user.get_pm_name('8934'))
 print(new_user.get_pm_budget('4565'))
 
-new_user.change_pm_aas('8934', 50)
+#new_user.change_pm_aas('8934', 50)
 print(new_user.get_pm_aas('8934'))
 
-new_user.change_pm_aas('8934', 50)
-new_user.add_category('4565', 'Miscellaneous', 200, 50)
+#new_user.change_pm_aas('8934', 50)
+new_user.add_category('4565', 'Miscellaneous', 40, 35)
 new_user.add_category('8934', 'Gas', 30, 20)
 
-new_user.add_category('8934','food', 200, 150)
+new_user.add_category('8934','food', 170, 150)
 
-new_user.change_cat_budget('4565', 'Miscellaneous' ,300)
+#new_user.change_cat_budget('4565', 'Miscellaneous' ,300)
 
 print(new_user.get_sum_of_pm_budgets())
 
 print(new_user.get_cat_budget('4565', 'Miscellaneous'))
 
-new_user.change_cat_notif('8934', 'Food', 175)
+#new_user.change_cat_notif('8934', 'Food', 160)
 
-new_user.change_cat_AAS('8934', 'Gas', 10)
+#new_user.change_cat_AAS('8934', 'Gas', 10)
 
-new_user.transaction_both('4565', 'miscellaneous', 50)
+new_user.transaction_both('4565', 'miscellaneous', 30)
 new_user.transaction_both('8934', 'food', 100)
