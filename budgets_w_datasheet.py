@@ -354,7 +354,7 @@ class user_profile:
         rows[i].append(notif_limit)
         rows[i].append(0)
         
-        rows[i][cat_index-1] = sum_with_new_budget
+        rows[i][5] = sum_with_new_budget
         
         with open(file_name, 'w', newline='') as file:
             writer = csv.writer(file)
