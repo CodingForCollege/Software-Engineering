@@ -19,6 +19,14 @@ def validEmail(email):
 def validPassword(password):
     return len(password) >= 8
 
+def saveToCSV(userDB, filename='userInfo.csv');
+    # userDB becomes list of dictionaries
+    data = [{"Email": email, "HashedPassword": hashedPassword.decode()} for email, hashedPassword in userDB.items()]
+
+    # Converts to CSV file
+    df = pd.DataFrame(data)
+    df.to_csv(filename, index=False)
+
 # Function to register a new user
 def registerUser(userDB):
 
@@ -103,9 +111,6 @@ def main():
 
         else:
             print("Invalid choice. Please enter a number from 1 to 3.")
-
-        df = pd.DataFrame(userDB) 
-        df.to_csv('userInfo.csv', index=False)
 
 # Runs main program
 main()
