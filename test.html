@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alert Example</title>
+</head>
+<body>
+    <h1>Welcome to Flask</h1>
+    <script>
+        // Check if the backend passed an alert message
+        const alertMessage = "{{ alert_message }}";
+        if (alertMessage) {
+            alert(alertMessage); // Display it using alert()
+        }
+    </script>
+
+    <script>
+        fetch('/api/alert')
+            .then(response => response.json())
+            .then(data => {
+                if (data.alert_message) {
+                    alert(data.alert_message);
+                }
+            });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+Weekly Budget,Weekly Notification Limit,Weekly AAS,Payment Method Budgets Sum,,,,,,
+250000,0,0,2360.0,,,,,,
+PM_ID,PM Name,PM Budget,PM Notif limit,PM AAS,Sum of Cat,Cat Name,Cat Budget,Cat Notif Limit,Cat AAS
+0024,Debit,500,450,382.5,150.0,Groceries,150,50,0
+1773,Credit,500,450,184.9,150.0,Recreational,150,50,0
+1833,Debit,500,450,120.95,150.0,Shopping,150,50,0
+0,Credit,500,450,541.4499999999999,150.0,Utilities,150,50,0
+0123,Credit,180.0,150.0,20.0,100.0,Shopping,100.0,85.0,0
+4567,Credit,180.0,150.0,25.5,100.0,Shopping,100.0,85.0,0

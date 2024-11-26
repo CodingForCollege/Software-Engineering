@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Transactions</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            text-align: left;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #loading-indicator {
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+
+
+        h1 { color: #2AA198; text-align: center }
+        table{text-align: left}
+        p{text-align: center}
+        h2 { color: black; }
+        /* The sidebar menu */
+        .sidenav {
+            height: 100%;
+            width: max-content;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: #002B36;
+            overflow-x: hidden;
+            padding-top: 20px;
+        }
+            
+        .sidenav a {
+            padding: 6px 8px 6px 16px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+        }
+            
+        .sidenav a:hover {
+            color: #f1f1f1;
+        }
+            
+        .main {
+            margin-left: 160px; /* Same as the width of the sidenav */
+            font-size: 28px; /* Increased text to enable scrolling */
+            padding: 0px 10px;
+        }
+            
+        @media screen and (max-height: 450px) {
+            .sidenav {padding-top: 15px;}
+            .sidenav a {font-size: 18px;}
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<h3>User Profile</h3>
+<div id="week4-container">Loading Week 4 data...</div>
+
+<h3>Week Transactions</h3>
+<div id="week-container">Loading Week data...</div>
+
+<!-- <h3>Week 2 Transactions</h3>
+<div id="week2-container">Loading Week 2 data...</div> -->
+
+
+<script>
+    const week4Path = '/transactions/UserProfile.csv'; // Path to Week 4 CSV file
+    const weekPath = '/transactions/week2.csv'; // Path to Week CSV file
+    //const week3Path = '/transactions/week3.csv'; // Correct path to the file
+
+    // Function to load and process a CSV file
+    async function loadCSV(filePath, containerId, processor) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = 'Loading data...';
+
+        try {
+            const response = await fetch(filePath);
+            if (!response.ok) throw new Error('Failed to load file: ${filePath}');
+            const csvText = await response.text();
+
+            Papa.parse(csvText, {
+                header: false, // Set true for Week and Week2, false for Week4
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const processedData = processor(results.data);
+                    displayTable(processedData, container);
+                }
+            });
+        } catch (error) {
+            console.error('Error loading ${filePath}:, error');
+            container.textContent = 'Failed to load data.';
+        }
+    }
+
+    // Processor for Week 4 CSV (Payment Methods with Categories)
+    function processWeek4CSV(data) {
+        const result = [];
+        for (let i = 3; i < data.length; i++) { // Start processing from row 4
+            const row = data[i];
+            const baseData = {
+                PM_ID: row[0],
+                PM_Name: row[1],
+                PM_Budget: parseFloat(row[2]) || 0,
+                PM_Notif_limit: parseFloat(row[3]) || 0,
+                PM_AAS: parseFloat(row[4]) || 0
+            };
+
+            for (let j = 6; j < row.length; j += 4) { // Process category blocks
+                if (!row[j]) continue; // Skip empty categories
+                const categoryData = {
+                    Category: row[j],
+                    Cat_Budget: parseFloat(row[j + 1]) || 0,
+                    Cat_Notif_Limit: parseFloat(row[j + 2]) || 0,
+                    Cat_AAS: parseFloat(row[j + 3]) || 0
+                };
+                result.push({ ...baseData, ...categoryData });
+            }
+        }
+        return result;
+    }
+
+    // Processor for Week and Week2 CSVs
+    function processWeekCSV(data) {
+        return data.map(row => ({
+            Purchase: row[0],
+            Category: row[1],
+            Amount: parseFloat(row[2]) || 0,
+            Date: row[3],
+            Total: parseFloat(row[4]) || 0,
+            Card: row[5],
+            AAs: parseFloat(row[6]) || 0
+        }));
+    }
+
+    // Function to display data as a table
+    function displayTable(data, container) {
+        container.innerHTML = ''; // Clear loading message
+
+        if (data.length > 0) {
+            const table = document.createElement('table');
+            const headerRow = document.createElement('tr');
+
+            // Define headers dynamically from data keys
+            const headers = Object.keys(data[0]);
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            // Add rows for each data entry
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = row[header] !== undefined ? row[header] : '';
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+
+            container.appendChild(table);
+        } else {
+            container.textContent = 'No data found.';
+        }
+    }
+
+    // Load all CSV files on page load
+    window.onload = function() {
+        loadCSV(week4Path, 'week4-container', processWeek4CSV); // Load Week 4 data
+        loadCSV(weekPath, 'week-container', processWeekCSV);    // Load Week data
+        //loadCSV(week2Path, 'week2-container', processWeekCSV); // Load Week 2 data
+    };
+</script>
+
+<div class="sidenav">
+    <a href="home">Home</a>
+    <a href="budget">Budget</a>
+    <a href="#transactions">Transactions</a>
+</div>
+
+</body>
+</html>
